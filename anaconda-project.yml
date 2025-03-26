@@ -1,0 +1,20 @@
+name: Book Notes
+description: Learning Sphinx and creating notes for my learinings
+
+commands:
+  quickstart:
+    unix: sphinx-quickstart
+  build:
+    unix: rm -rf build & sphinx-build -b html ./source  ./build
+  serve:
+    unix: sphinx-autobuild ./source ./build
+
+env_specs:
+  default:
+    packages:
+      - python
+      - sphinx=7.2.6
+
+channels:
+  - defaults
+  - https://conda.anaconda.org/conda-forge/
