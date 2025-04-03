@@ -5,9 +5,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Embedded Linux Using The Yocto Project &#8212; BookNotes 2025 documentation</title>
+    <title>Bitbake &#8212; BookNotes 2025 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="_static/classic.css?v=514cf933" />
+    <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=96a11d58" />
     
     <script src="_static/documentation_options.js?v=cb975c41"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
@@ -15,7 +16,7 @@
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Notes from books and courses" href="index.html" /> 
+    <link rel="prev" title="My notes and references" href="index.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -24,10 +25,10 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="index.html" title="Notes from books and courses"
+          <a href="index.html" title="My notes and references"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">BookNotes 2025 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Embedded Linux Using The Yocto Project</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Bitbake</a></li> 
       </ul>
     </div>  
 
@@ -36,8 +37,8 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="embedded-linux-using-the-yocto-project">
-<h1>Embedded Linux Using The Yocto Project<a class="headerlink" href="#embedded-linux-using-the-yocto-project" title="Link to this heading">¶</a></h1>
+  <section id="bitbake">
+<h1>Bitbake<a class="headerlink" href="#bitbake" title="Link to this heading">¶</a></h1>
 <p><em>Bitbake is a generic task excecution engine that allows shell and Python tasks to be run efficiently and in parallel while</em>
 <em>working within complex inter-task dependancy constraints</em> - From the bitbake docs</p>
 <section id="brief-update-about-layers">
@@ -66,10 +67,22 @@
 <span class="linenos">16</span>
 <span class="linenos">17</span><span class="nv">LAYERDEPENDS_yocto</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;core&quot;</span>
 <span class="linenos">18</span>
-<span class="linenos">19</span><span class="nv">REQUIRED_POKY_BBLAYERS_CONF_VESION</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2&quot;</span><span class="sb">``</span>
+<span class="linenos">19</span><span class="nv">REQUIRED_POKY_BBLAYERS_CONF_VESION</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;2&quot;</span>
 </pre></div>
 </div>
-<p>BBPATH acts like the PATH variable but adds a directory to the search list for the metadata files</p>
+<p><strong>BBPATH</strong> - acts like the PATH variable but adds a directory to the search list for the metadata files
+You can either explicitly set it in the command line using <code class="docutils literal notranslate"><span class="pre">BBPATH=&quot;&lt;projectdirectory&gt;&quot;</span></code> or
+you can set in implicitly using a config file like above.</p>
+<p><strong>BBFILES</strong> - List of file for Bitbake to use to build software</p>
+<p><strong>BBFILE_COLLECTIONS</strong> - Lists the names of configured layers. These names are used to find the other BBFILE_* variables. Typically, each layer
+appends its name to this variable in its <em>conf/layer.conf</em> file.</p>
+<p><strong>BBFILE_PATTERN_**</strong> - Variable that expands to match files from
+BBFILES in a particular layer. This variable is used in the <em>conf/layer.conf</em> file and must be suffixed with the name of the specific layer(e.g BBFILE_PATTERN_emenlow)</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The meaning of “^${LAYERDIR}/”:
+^ tells bitbake to go down 2 layer</p>
+</div>
 </section>
 </section>
 
@@ -83,7 +96,7 @@
   <div>
     <h3><a href="index.html">Table of Contents</a></h3>
     <ul>
-<li><a class="reference internal" href="#">Embedded Linux Using The Yocto Project</a><ul>
+<li><a class="reference internal" href="#">Bitbake</a><ul>
 <li><a class="reference internal" href="#brief-update-about-layers">Brief update about layers</a></li>
 </ul>
 </li>
@@ -93,7 +106,7 @@
   <div>
     <h4>Previous topic</h4>
     <p class="topless"><a href="index.html"
-                          title="previous chapter">Notes from books and courses</a></p>
+                          title="previous chapter">My notes and references</a></p>
   </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
@@ -123,10 +136,10 @@
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="index.html" title="Notes from books and courses"
+          <a href="index.html" title="My notes and references"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">BookNotes 2025 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Embedded Linux Using The Yocto Project</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Bitbake</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

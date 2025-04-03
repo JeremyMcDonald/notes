@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Linux Device Drivers &#8212; BookNotes 2025 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=514cf933" />
+    <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=96a11d58" />
+    
+    <script src="_static/documentation_options.js?v=cb975c41"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Neovim" href="Neovim.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="Neovim.html" title="Neovim"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">BookNotes 2025 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Linux Device Drivers</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="linux-device-drivers">
+<h1>Linux Device Drivers<a class="headerlink" href="#linux-device-drivers" title="Link to this heading">¶</a></h1>
+<p><em>Abbreviations</em>
+- Industrial input/output(IIO)
+- General-purpose input/output (GPIO)
+- Interrupt request management (IRQ)
+- Inter-Integrated Circuit (I2C)
+- Serial Peripheral Interface (SPI)</p>
+<section id="chapter-1-introduction-to-kernel-development">
+<h2>Chapter 1: Introduction to Kernel Development<a class="headerlink" href="#chapter-1-introduction-to-kernel-development" title="Link to this heading">¶</a></h2>
+<section id="setting-up-the-development-enviroment">
+<h3>Setting up the development enviroment<a class="headerlink" href="#setting-up-the-development-enviroment" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Target - is the machine that the binaries are being built for.</p></li>
+<li><p>Host - This is the place where the build is happening</p></li>
+<li><p>Compilation - This is also called <strong>native compilation</strong> or a <strong>native build</strong>. This happens when the compilation and the build target are the same.</p></li>
+<li><p>Cross-Compilation This is where the target and the host are different.</p></li>
+</ul>
+<p>To check the system you are currently running on you can use the command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">lsb_release</span> <span class="o">-</span><span class="n">a</span>
+<span class="c1"># Example result</span>
+<span class="n">Distributor</span> <span class="n">ID</span><span class="p">:</span> <span class="n">Ubuntu</span>
+<span class="n">Description</span><span class="p">:</span> <span class="n">Ubuntu</span> <span class="mf">18.04.5</span> <span class="n">LTS</span>
+<span class="n">Release</span><span class="p">:</span> <span class="mf">18.04</span>
+<span class="n">Codename</span><span class="p">:</span> <span class="n">Bionic</span>
+</pre></div>
+</div>
+</section>
+<section id="setting-up-the-host-machine">
+<h3>Setting up the host machine<a class="headerlink" href="#setting-up-the-host-machine" title="Link to this heading">¶</a></h3>
+<p>The packages we need for this development are
+- gawk
+- wget
+- git
+- diffstat
+- unzip
+- texinfo
+- gcc-multilib
+- build-essentials
+- chrpath
+- socat
+- libsdl1.2-dev
+- xterm
+- curses-dev
+- lzop
+- libelf-dev
+- make</p>
+<p>This installs some development tools and some mandatory libraries so that we have a nice user interface while developing
+After this well install a compiler and some more tools(linker, assembler and so on).
+This set of tools is called <strong>Binutils</strong> and <strong>Binutils + the compiler</strong> is called a <strong>toolchain</strong>.</p>
+</section>
+<section id="understanding-and-installing-the-toolchains">
+<h3>Understanding and installing the toolchains<a class="headerlink" href="#understanding-and-installing-the-toolchains" title="Link to this heading">¶</a></h3>
+<p>Toolchain - gcc (compiler) &amp; binutils</p>
+<p>When you cross-compile you need to identify the right tool chain, for this a naming convention has been created.</p>
+<p><code class="docutils literal notranslate"><span class="pre">arch</span> <span class="pre">[-vendor]</span> <span class="pre">[-os]</span> <span class="pre">-abi</span></code></p>
+<p>The breakdown of this is:</p>
+<ul class="simple">
+<li><p>arch - identifies the <strong>architecture</strong>; i.e arm, mips, x86, i686 … And so on.</p></li>
+<li><p>vendor - is the toolchain <strong>supplier (company)</strong>; i.e Bootlin, Linaro, none(if there is no provider) or you can omit this field.</p></li>
+<li><p>os - this is the <strong>target operating system</strong>; i.e linux or none(bare-metal). (If this is omitted then bare-metal is assumed)</p></li>
+<li><p>abi - this stands for <strong>application binary interface</strong>, it refers to what the underlying binary is going to look like.</p></li>
+</ul>
+<p>The abi options in more detail:</p>
+<ul class="simple">
+<li><p>eabi - means the code will be compiled to run on a bare metal ARM core</p></li>
+<li><p>gnueabi - means the code will be compiled for Linux</p></li>
+<li><p>gnueabihf - is the same as above but the hf means hardfloat and indicates that the compiler and libraries are using floating-point hardware instructions.</p></li>
+</ul>
+<p>Some example toolchain names to illustrate the pattern:</p>
+<ul class="simple">
+<li><p><strong>arm-none-eabi</strong> : This uses ARM architecture has no vendor and targets a bare-metal system</p></li>
+<li><p><strong>arm-non-linux-gnueabi</strong> or <strong>arm-linux-gnueabi</strong> : This produces  objects for the ARM architecture to be run on Linux and configured with the ABI (default) configuration.</p></li>
+</ul>
+<section id="installing-the-32-bit-toolchain-for-arm-architecture">
+<h4>Installing the 32-bit toolchain for ARM architecture<a class="headerlink" href="#installing-the-32-bit-toolchain-for-arm-architecture" title="Link to this heading">¶</a></h4>
+<p>Required installs are:
+- gcc-arm-linux-gnueabihf
+- binutils-arm-linux-gnueabihf</p>
+</section>
+<section id="installing-the-64-bit-tool-chain-for-arm-architecture">
+<h4>Installing the 64-bit tool chain for ARM architecture<a class="headerlink" href="#installing-the-64-bit-tool-chain-for-arm-architecture" title="Link to this heading">¶</a></h4>
+<p>Required installs are called aarch64, and this is whats required:
+- make
+- gcc-aarch64-linux-gnu
+- binutils-aarch64-linux-gnu</p>
+<p>note:: <em>aarch64 only supports/provides hardware for float 64 toolchains. Thus there is no need to specify ‘hf’ at the end.</em></p>
+</section>
+</section>
+<section id="getting-the-sources">
+<h3>Getting the sources<a class="headerlink" href="#getting-the-sources" title="Link to this heading">¶</a></h3>
+<p>Back in the day the Linux Kernel used X.Y.Z semantic versionin then it switch to X.Y versioning, now it uses non-sequential X.Y versioning with
+one Long Term Support (LTS) and one stable release:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">git</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">pub</span><span class="o">/</span><span class="n">scm</span><span class="o">/</span><span class="n">linux</span><span class="o">/</span><span class="n">kernel</span><span class="o">/</span><span class="n">git</span><span class="o">/</span><span class="n">torvalds</span><span class="o">/</span><span class="n">linux</span><span class="o">.</span><span class="n">git</span> <span class="o">--</span><span class="n">depth</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p><strong>note:</strong> <em>The –depth 1 means we only get the most recent commits and not ALL the commits</em></p>
+<section id="looking-inside-the-directory">
+<h4>Looking inside the directory<a class="headerlink" href="#looking-inside-the-directory" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p><strong>arch/</strong> -  This contains the processor-specific code, it has sub-directories per architecture alpha/ arm/ mips/ arm64/ etc..</p></li>
+<li><p><strong>block/</strong> - This contains the code for block storage devices</p></li>
+<li><p><strong>crypto/</strong> -  This containts the cryptographic API and encryption stuff</p></li>
+<li><p><strong>certs/</strong> - This contains certs to sign files for the kernel</p></li>
+<li><p><strong>documentation/</strong> - This contains descriptions of the APIs that are used for different Kernel frameworks. If you have questions look here first.</p></li>
+<li><p><strong>drivers/</strong> - contains the drivers.</p></li>
+<li><p><strong>fs/</strong> - This directory contains different implementations of file systems. FAT32, NTFS, ETX{2,3,4} sysfs, procfs,NFS etc..</p></li>
+<li><p><strong>include/</strong> - This directory contains the kernel header files.</p></li>
+<li><p><strong>init/</strong> - This contains initialization and startup code.</p></li>
+<li><p><strong>ipc/</strong> - This is the inter-process-communication mechanisms, like message queues, semaphores and shared memory.</p></li>
+<li><p><strong>kernel/</strong> - This contains architecture-independent portions of the base kernel.</p></li>
+<li><p><strong>lib/</strong> - Contains help[er functions like kernel object(kobject) and cyclic redundancy code(CRC).</p></li>
+<li><p><strong>mm/</strong> - Memory managment code.</p></li>
+<li><p><strong>net/</strong> - Networking protocol code.</p></li>
+<li><p><strong>samples/</strong> - This icontains the device driver samples for various subsystems</p></li>
+<li><p><strong>scripts/</strong> - This contains scripts and tools.</p></li>
+<li><p><strong>security/</strong> - security framework code.</p></li>
+<li><p><strong>sound/</strong> - Code for sound.</p></li>
+<li><p><strong>tools/</strong> - Linux Kernel development tooals and tools for testing subsystems. GPIO, IIO, SPI, etc.</p></li>
+<li><p><strong>usr/</strong> - Intramfs implementation</p></li>
+<li><p><strong>virt/</strong> - this has the kernel virtual machine (KVM) module for hypervisor</p></li>
+</ul>
+<p>Any arichtecture specific code should go in the <strong>arch/</strong> directory.</p>
+</section>
+<section id="configuring-and-building-the-linux-kernel">
+<h4>Configuring and building the Linux kernel<a class="headerlink" href="#configuring-and-building-the-linux-kernel" title="Link to this heading">¶</a></h4>
+<p>The kernel uses the compiler specified in the Makefile:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$(CROSS_COMPILE)gcc
+</pre></div>
+</div>
+<p>CROSS_COMPILE is the prefix for cross-compiling tools (gccm, as, ld, objcopy, etc..) and must be specified when invoking <strong>make</strong>.</p>
+<p>Only gcc and its related Binutils executables will be prefixed with $CROSS_COMPILE).</p>
+<p>We will us the ARCH enviroment to configure and build linux:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ARCH</span><span class="o">=&lt;</span><span class="n">XXXX</span><span class="o">&gt;</span> <span class="n">CROSS_COMPILE</span><span class="o">=&lt;</span><span class="n">YYYY</span><span class="o">&gt;</span> <span class="n">make</span> <span class="n">menuconfig</span>
+</pre></div>
+</div>
+<p><strong>Or</strong>
+.. code-block:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ARCH</span><span class="o">=&lt;</span><span class="n">XXXX</span><span class="o">&gt;</span> <span class="n">CROSS_COMPILE</span><span class="o">=&lt;</span><span class="n">YYYY</span><span class="o">&gt;</span> <span class="n">make</span> <span class="o">&lt;</span><span class="n">make_target</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>If we are running commands often we can export the enviroment variable to the current shell like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">CROSS_COMPILE</span><span class="o">=</span><span class="n">aarch64</span><span class="o">-</span><span class="n">linux</span><span class="o">-</span><span class="n">gnu</span><span class="o">-</span>
+<span class="n">export</span> <span class="n">ARCH</span><span class="o">=</span><span class="n">aarch64</span>
+</pre></div>
+</div>
+<p><em>Remember</em> If theses are <strong>NOT</strong> specified the native host machine is going to be the build target instead of the machine you want targeted.</p>
+</section>
+<section id="understanding-the-kernel-configuration-process">
+<h4>Understanding the kernel configuration process<a class="headerlink" href="#understanding-the-kernel-configuration-process" title="Link to this heading">¶</a></h4>
+<p>We can use an interface if we make the kernel with the command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">menuconfig</span>
+<span class="ow">or</span>
+<span class="n">make</span> <span class="n">xconfig</span>
+</pre></div>
+</div>
+<p>The options for configuration are as follows</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>Boolean</dt><dd><ul>
+<li><p>(blank) this ommits the feature.</p></li>
+<li><p>(*) Compiles statically to the kernel</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Tristate options (Like boolean but with 3 options)</dt><dd><ul>
+<li><p>(blank) as above</p></li>
+<li><p>(*) as above</p></li>
+<li><ol class="loweralpha simple" start="13">
+<li><p>Produces a loadable module and can be selected by pressing M</p></li>
+</ol>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>String</dt><dd><ul>
+<li><p>Expect string values eg.. CONFIG_CMDLINE=”noinitrd console=ttymxc0,115200”</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Hex</dt><dd><ul>
+<li><p>Requires a hexidecimal value eg.. CONFIG_PAGE_OFFSET=0x80000000</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Int</dt><dd><ul>
+<li><p>Requires integer options DEFAULT=1</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<p>These options will be stored in a .config file at the root of the source tree.</p>
+<p>Often it is not nesseccary to start from scratch, you can find configurations for many platforms in:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ls</span> <span class="n">arch</span><span class="o">/&lt;</span><span class="n">your</span> <span class="n">architecture</span><span class="o">&gt;/</span><span class="n">configs</span><span class="o">/</span>
+</pre></div>
+</div>
+<p>Using</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="o">&lt;</span><span class="n">foo_defconfig</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>Will generate a new .config file and rename the old one to .config.old.</p>
+<p>To customize the current .config we can use</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">menuconfig</span>
+</pre></div>
+</div>
+<p>To create a standard configuration with a minimal format to use a default starting configuration we can use the command.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">savedefconfig</span>
+</pre></div>
+</div>
+<p>Good practice is to move the file after creation to the arch directory of the architecture you are using so other developers on your
+team can user the same default config you are using</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mv</span> <span class="n">defconfig</span> <span class="n">arch</span><span class="o">/&lt;</span><span class="n">arch</span><span class="o">&gt;/</span><span class="n">configs</span><span class="o">/</span><span class="n">myoown_defconfig</span>
+</pre></div>
+</div>
+<p>The following are examples of commands we can use:</p>
+<ul class="simple">
+<li><p>For native compilation a lot of options can be omitted</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">x86_64_defconfig</span>
+<span class="n">make</span> <span class="n">menuconfig</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>For a cross compiled 32-bit ARM i.MX6-based board would look like this</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ARCH</span><span class="o">=</span><span class="n">arm</span> <span class="n">CROSS_COMPILE</span><span class="o">=</span><span class="n">arm</span><span class="o">-</span><span class="n">linux</span><span class="o">-</span><span class="n">gnueabihf</span><span class="o">-</span> <span class="n">make</span> <span class="n">imx_v6_v7_defconfig</span>
+<span class="n">ARCH</span><span class="o">=</span><span class="n">arm</span> <span class="n">CROSS_COMPILE</span><span class="o">=</span><span class="n">arm</span><span class="o">-</span><span class="n">linux</span><span class="o">-</span><span class="n">gnueabihf</span><span class="o">-</span> <span class="n">make</span> <span class="n">menuconfig</span>
+</pre></div>
+</div>
+<ul>
+<li><p>An example of a 64-bit system configuration would look like this</p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ARCH</span><span class="o">=</span><span class="n">aarch64</span> <span class="n">CROSS_COMPILE</span><span class="o">=</span><span class="n">aarch64</span><span class="o">-</span><span class="n">linux</span><span class="o">-</span><span class="n">gnu</span><span class="o">-</span> <span class="n">make</span> <span class="n">defconfig</span>
+<span class="n">ARCH</span><span class="o">=</span><span class="n">aarch64</span> <span class="n">CROSS_COMPILE</span><span class="o">=</span><span class="n">aarch64</span><span class="o">-</span><span class="n">linux</span><span class="o">-</span><span class="n">gnu</span><span class="o">-</span> <span class="n">make</span> <span class="n">menuconfig</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+<p><em>note</em> if you run into an error using xconfig its probably due to Qt4, you can fix it by installing the missing packages:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">qt4</span><span class="o">-</span><span class="n">dev</span><span class="o">-</span><span class="n">tools</span> <span class="n">qt4</span><span class="o">-</span><span class="n">qmake</span>
+</pre></div>
+</div>
+<p>Configs can be available on the running system in /boot/config and can be copied using
+.. code-block:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cp</span> <span class="o">/</span><span class="n">boot</span><span class="o">/</span><span class="n">config</span> <span class="s1">&#39;uname -r&#39;</span> <span class="o">.</span><span class="n">config</span>
+</pre></div>
+</div>
+<p>A better option is to enable <strong>IKCONFIG</strong> and <strong>IKCONFIG_PROC</strong> in the kernel config options this will allow access to .config through /proc/configs.gz
+This is considered a standard method and works with embedded systems.</p>
+</section>
+<section id="some-useful-configuration-files">
+<h4>Some useful configuration files<a class="headerlink" href="#some-useful-configuration-files" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>IKCONFIG and IKCONFIG_RPOC: These let you see the state of the kernel configuration at run time. eg:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># zcat /proc/config.gz | grep CONFIG_SOUND</span>
+<span class="n">CONFIG_SOUND</span><span class="o">=</span><span class="n">y</span>
+<span class="n">CONFIG_SOUND_OS_CORE</span><span class="o">=</span><span class="n">y</span>
+<span class="n">CONFIG_SOUND_OSS_CORE_PRECLAIM</span><span class="o">=</span><span class="n">y</span>
+
+<span class="c1"># CONFIG_SOUNDWIRE is not set</span>
+<span class="c1">#</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>CMDLINE_EXTEND and CMDLINE: The first option is a Boolean that allows you to extend the kernel command-line from within the configuration and the second option is the actual extended command-line extension value.</p></li>
+<li><p>CONFIG_KALLSYMS: This makes the kernel symbol table available in /proc/kallsyms. This is useful for tracers and other tools to map the kernel symbols to addresses. Without this oops messages will be printed in hexadecimal.</p></li>
+<li><p>CONFIG_PRINTK_TIME: This prints timing while printing info from the kernel.</p></li>
+<li><p>CONFIG_INPUT_EVBUG: This lets you debug input devices.</p></li>
+<li><p>CONFIG_MAGIC_SYSRQ: This lets you have some control over the system even after a crash.</p></li>
+<li><p>DEBUG_FS: This enables support for debug files where GPIO, CLOCK, DMA, REGMAP, IRQs and other subsystems to be debugged from.</p></li>
+<li><dl class="simple">
+<dt>FTRACE and DYNAMIC_FTRACE: These options enable <em>ftrace</em> tracer. Once it is enabled it has more options that can be enabled</dt><dd><ul>
+<li><p>FUNCTION_TRACER: Traces a non-inline function in the kernel</p></li>
+<li><p>IRQSOFF_TRACER: This lets you track off periods of IRQs in the kernel</p></li>
+<li><p>PREEEMPT_TRACER: Allows you to measure preemption off latency.</p></li>
+<li><p>SCHED_TRACER: This allows you to schedule latency tracing.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="building-the-linux-kernel">
+<h4>Building the Linux Kernel<a class="headerlink" href="#building-the-linux-kernel" title="Link to this heading">¶</a></h4>
+<p>You should do this in the same shell that you did the cross-compile in if you set the ARCH and CROSS-COMPILE enviroment variables.</p>
+<p>by defualt the make target is <strong>all</strong>. So for x86 architectures the target points to <strong>vmlinux bzImage modules</strong>.
+For ARM or aarch64 it targets <strong>vmlinux zImage modules</strong> and <strong>dtbs</strong>.</p>
+<ul class="simple">
+<li><p>bzImage is a x86 specific target thaty produces a binary also named bzImage</p></li>
+<li><p>vmlinux produces an image called vmlinux</p></li>
+<li><p>zImage and dtb are both ARM aarch64 specific. zImage produces a zImage image and dtb produces a device tree sources for the target CPU variant.</p></li>
+<li><p>modules is a target that will produce all the selected modules (maked with m configuration)</p></li>
+</ul>
+<p>We can speed up our build by usnig more cores on the host system. -j is a make option that lets us do this. e.g:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="o">-</span><span class="n">j16</span>
+</pre></div>
+</div>
+<p>Most people use a number that is 1.5x the number of cores the host system has. But you can use as high as 2.</p>
+<p>Example build commands for a host system that has an 8 core CPU:
+<strong>Native compilation</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="o">-</span><span class="n">j16</span>
+</pre></div>
+</div>
+<p><strong>32-bit ARM cross compilation</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ARCH</span><span class="o">=</span><span class="n">arm</span> <span class="n">CROSS_COMPILATION</span><span class="o">=</span><span class="n">arm</span><span class="o">-</span><span class="n">linux</span><span class="o">-</span><span class="n">gnueabi</span><span class="o">-</span> <span class="n">make</span> <span class="o">-</span><span class="n">j16</span>
+</pre></div>
+</div>
+<p>If you don’t want to do all the commands all at once you can also invoke them individually:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ARCH</span><span class="o">=</span><span class="n">arm</span> <span class="n">CROSS_COMPILE</span><span class="o">=</span><span class="n">arm</span><span class="o">-</span><span class="n">linux</span><span class="o">-</span><span class="n">gnueabihf</span><span class="o">-</span> <span class="n">make</span> <span class="n">dtbs</span>
+</pre></div>
+</div>
+<p><strong>or</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ARCH</span><span class="o">=</span><span class="n">arm</span> <span class="n">CROSS_COMPILE</span><span class="o">=</span><span class="n">arm</span><span class="o">-</span><span class="n">linux</span><span class="o">-</span><span class="n">gnueabihf</span><span class="o">-</span> <span class="n">make</span> <span class="n">zImage</span> <span class="o">-</span><span class="n">j16</span>
+</pre></div>
+</div>
+<p>Or if you have set the variables in the shell you can even shorten it to this:</p>
+<p>After the project is built we will get a few files as a result:</p>
+<p>a compressed and a uncompressed image that can be booted from can be found in:</p>
+<p><code class="docutils literal notranslate"><span class="pre">arch/&lt;arch&gt;/boot/Image</span></code></p>
+<p>In arch/&lt;arch&gt;/boot/dts/<a href="#id1"><span class="problematic" id="id2">*</span></a>.dtb contains the device tree blobs and vmlinux which is a raw unstripped uncompress kernel image in ELF format that is useful for debugging but not much else.</p>
+</section>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Linux Device Drivers</a><ul>
+<li><a class="reference internal" href="#chapter-1-introduction-to-kernel-development">Chapter 1: Introduction to Kernel Development</a><ul>
+<li><a class="reference internal" href="#setting-up-the-development-enviroment">Setting up the development enviroment</a></li>
+<li><a class="reference internal" href="#setting-up-the-host-machine">Setting up the host machine</a></li>
+<li><a class="reference internal" href="#understanding-and-installing-the-toolchains">Understanding and installing the toolchains</a><ul>
+<li><a class="reference internal" href="#installing-the-32-bit-toolchain-for-arm-architecture">Installing the 32-bit toolchain for ARM architecture</a></li>
+<li><a class="reference internal" href="#installing-the-64-bit-tool-chain-for-arm-architecture">Installing the 64-bit tool chain for ARM architecture</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#getting-the-sources">Getting the sources</a><ul>
+<li><a class="reference internal" href="#looking-inside-the-directory">Looking inside the directory</a></li>
+<li><a class="reference internal" href="#configuring-and-building-the-linux-kernel">Configuring and building the Linux kernel</a></li>
+<li><a class="reference internal" href="#understanding-the-kernel-configuration-process">Understanding the kernel configuration process</a></li>
+<li><a class="reference internal" href="#some-useful-configuration-files">Some useful configuration files</a></li>
+<li><a class="reference internal" href="#building-the-linux-kernel">Building the Linux Kernel</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="Neovim.html"
+                          title="previous chapter">Neovim</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/LinuxDeviceDrivers.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="Neovim.html" title="Neovim"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">BookNotes 2025 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Linux Device Drivers</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, Jeremy McDonald.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
+    </div>
+  </body>
+</html>
